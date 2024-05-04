@@ -19,15 +19,41 @@ std::vector<std::string> Controller::loadGroups() {
  */
 std::vector<std::string> Controller::loadSources(const std::string& group) {
   this->openSdCardIfNeeded();
-  return this->listSubfolderNames(this->getGroupPath(group));
+
+  std::vector sources = this->listSubfolderNames(this->getGroupPath(group));
+
+  for (std::string& source : sources) {
+    source = this->trimRating(source);
+  }
+
+  return sources;
 }
 
 /**
  * Load all mod options that could be activated for the moddable source in the group
  */
-std::vector<std::string> Controller::loadMods(const std::string& source, const std::string& group) {
+std::vector<Mod> Controller::loadMods(const std::string& source, const std::string& group) {
   this->openSdCardIfNeeded();
-  return this->listSubfolderNames(this->getSourcePath(group, source));
+
+  std::vector<Mod> mods = std::vector<Mod>();
+  std::string sourcePath = this->getSourcePath(group, source);
+
+  FsDir dir = this->openDirectory(sourcePath, FsDirOpenMode_ReadDirs);
+
+  FsDirectoryEntry entry;
+  s64 readCount;
+  while (R_SUCCEEDED(fsDirRead(&dir, &readCount, 1, &entry))) {
+    if (entry.type == FsDirEntryType_Dir) {
+      mods.push_back({
+        name: entry.name,
+        rating: this->getRatingFromName(entry.name)
+      });
+    }
+  }
+
+  fsDirClose(&dir);
+
+  return mods;
 }
 
 /**
@@ -223,6 +249,88 @@ void Controller::deactivateMod(const std::string& source, const std::string& gro
   fsFsDeleteFile(&this->sdSystem, movedFilesListPath.c_str());
 }
 
+u8 Controller::getModlessRating(const std::string& source, const std::string& group) {
+  this->openSdCardIfNeeded();
+
+  u8 rating = DEFAULT_RATING;
+  std::string groupPath = this->getGroupPath(group);
+
+  FsDir dir = this->openDirectory(groupPath, FsDirOpenMode_ReadDirs);
+
+  FsDirectoryEntry entry;
+  s64 readCount;
+  while (R_SUCCEEDED(fsDirRead(&dir, &readCount, 1, &entry))) {
+    if (entry.type == FsDirEntryType_Dir && source == this->trimRating(entry.name)) {
+      rating = this->getRatingFromName(entry.name);
+      break;
+    }
+  }
+
+  fsDirClose(&dir);
+
+  return rating;
+}
+
+void Controller::saveModlessRating(const u8& rating, const std::string& source, const std::string& group) {
+  this->openSdCardIfNeeded();
+
+  std::string groupPath = this->getGroupPath(group);
+  FsDir dir = this->openDirectory(groupPath, FsDirOpenMode_ReadDirs);
+
+  FsDirectoryEntry entry;
+  s64 readCount;
+  while (R_SUCCEEDED(fsDirRead(&dir, &readCount, 1, &entry))) {
+    std::string ratinglessName = this->trimRating(entry.name);
+    if (entry.type == FsDirEntryType_Dir && source == ratinglessName) {
+      std::string oldPath = groupPath + "/" + entry.name;
+      std::string newPath = groupPath + "/" + ratinglessName;
+
+      if (rating != DEFAULT_RATING) {
+        newPath += "_" + std::to_string(rating);
+      }
+
+      if (R_FAILED(fsFsRenameDirectory(&this->sdSystem, oldPath.c_str(), newPath.c_str()))) {
+        tsl::changeTo<GuiError>("Error: Failed to rename directory from " + oldPath + " to " + newPath);
+        abort();
+      }
+
+      break;
+    }
+  }
+
+  fsDirClose(&dir);
+}
+
+void Controller::saveRatings(std::vector<Mod> mods, const std::string& source, const std::string& group) {
+  this->openSdCardIfNeeded();
+
+  std::string sourcePath = this->getSourcePath(group, source);
+  FsDir dir = this->openDirectory(sourcePath, FsDirOpenMode_ReadDirs);
+
+  FsDirectoryEntry entry;
+  s64 readCount;
+  while (R_SUCCEEDED(fsDirRead(&dir, &readCount, 1, &entry))) {
+    std::string ratinglessName = this->trimRating(entry.name);
+    if (entry.type == FsDirEntryType_Dir && mods.back().name == ratinglessName) {
+      std::string oldPath = sourcePath + "/" + entry.name;
+      std::string newPath = sourcePath + "/" + ratinglessName;
+
+      if (mods.back().rating != DEFAULT_RATING) {
+        newPath += "_" + std::to_string(mods.back().rating);
+      }
+
+      if (R_FAILED(fsFsRenameDirectory(&this->sdSystem, oldPath.c_str(), newPath.c_str()))) {
+        tsl::changeTo<GuiError>("Error: Failed to rename directory from " + oldPath + " to " + newPath);
+        abort();
+      }
+      
+      mods.pop_back();
+    }
+  }
+
+  fsDirClose(&dir);
+}
+
 /**
  * Unmount SD card when destroyed 
  */
@@ -398,4 +506,38 @@ std::string Controller::getAtmosphereModPath(std::size_t alchemistModFolderPathS
  */
 std::string Controller::getMovedFilesListFilePath(const std::string& group, const std::string& source, const std::string& mod) {
   return this->getSourcePath(group, source) + "/" + mod + TXT_EXT;
+}
+
+bool Controller::hasRating(const std::string& folderName) {
+    if (folderName.size() < 3) {
+        return false;
+    }
+
+    char thirdLast = folderName[folderName.size() - 3];
+    char secondLast = folderName[folderName.size() - 2];
+    char last = folderName[folderName.size() - 1];
+
+    return thirdLast == '_' && std::isdigit(secondLast) && std::isdigit(last);
+}
+
+std::string Controller::getStringRatingFromName(const std::string& folderName) {
+  if (this->hasRating(folderName)) {
+    return folderName.substr(folderName.size() - 3);
+  }
+  return "";
+}
+
+u8 Controller::getRatingFromName(const std::string& folderName) {
+  std::string rawRating = this->getStringRatingFromName(folderName);
+  if (rawRating.empty()) {
+    return DEFAULT_RATING;
+  }
+  return std::stoi(rawRating);
+}
+
+std::string Controller::trimRating(const std::string& folderName) {
+  if (this->hasRating(folderName)) {
+    return folderName.substr(0, folderName.size() - 3);
+  }
+  return folderName;
 }

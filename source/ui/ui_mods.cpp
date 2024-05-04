@@ -5,7 +5,7 @@ GuiMods::GuiMods(Controller& controller_, const std::string& source_, const std:
 tsl::elm::Element* GuiMods::createUI() {
   auto frame = new tsl::elm::OverlayFrame("The Mod Alchemist", this->source);
 
-  std::vector<std::string> mods = controller.loadMods(this->source, this->group);
+  std::vector<Mod> mods = controller.loadMods(this->source, this->group);
   std::string_view activeMod = controller.getActiveMod(this->source, this->group);
 
   auto list = new tsl::elm::List();
@@ -23,13 +23,13 @@ tsl::elm::Element* GuiMods::createUI() {
   list->addItem(this->toggles[0]);
 
   // Add a toggle for each mod:
-  for (const std::string &mod : mods) {
-    auto item = new tsl::elm::ToggleListItem(mod, mod == activeMod);
+  for (const Mod &mod : mods) {
+    auto item = new tsl::elm::ToggleListItem(mod.name, mod.name == activeMod);
 
     item->setStateChangedListener([this, mod](bool state) {
       if (state) {
         controller.deactivateMod(this->source, this->group);
-        controller.activateMod(this->source, this->group, mod);
+        controller.activateMod(this->source, this->group, mod.name);
       } else {
         this->toggles[0]->setState(true);
         controller.deactivateMod(this->source, this->group);

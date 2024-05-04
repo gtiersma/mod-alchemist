@@ -6,6 +6,8 @@
 #include <string>
 #include <fstream>
 
+#include "mod.h"
+
 class Controller {
   private:
     FsFileSystem sdSystem;
@@ -30,7 +32,7 @@ class Controller {
     /*
      * Load all mod options that could be activated for the moddable source in the group
      */
-    std::vector<std::string> loadMods(const std::string& source, const std::string& group);
+    std::vector<Mod> loadMods(const std::string& source, const std::string& group);
 
     /*
      * Gets the mod currently activated for the moddable source in the group
@@ -48,6 +50,12 @@ class Controller {
      * Deactivates the currently active mod, restoring the moddable source to its vanilla state
      */
     void deactivateMod(const std::string& source, const std::string& group);
+
+    u8 getModlessRating(const std::string& group, const std::string& source);
+
+    void saveModlessRating(const u8& rating, const std::string& source, const std::string& group);
+
+    void saveRatings(std::vector<Mod> mods, const std::string& source, const std::string& group);
 
     /**
      * Unmount SD card when destroyed 
@@ -134,4 +142,9 @@ class Controller {
      * The file should only exist if the mod is currently active
      */
     std::string getMovedFilesListFilePath(const std::string& group, const std::string& source, const std::string& mod);
+
+    bool hasRating(const std::string& folderName);
+    std::string getStringRatingFromName(const std::string& folderName);
+    u8 getRatingFromName(const std::string& folderName);
+    std::string trimRating(const std::string& folderName);
 };
