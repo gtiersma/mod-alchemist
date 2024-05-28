@@ -13,6 +13,23 @@ class Controller {
     u64 titleId; // The current Game's Title ID
     std::string group;
     std::string source;
+    uint32_t RAM_Hz;
+    uint64_t RAM_Total_application_u;
+    uint64_t RAM_Total_applet_u;
+    uint64_t RAM_Total_system_u;
+    uint64_t RAM_Total_systemunsafe_u;
+    uint64_t RAM_Used_application_u;
+    uint64_t RAM_Used_applet_u;
+    uint64_t RAM_Used_system_u;
+    uint64_t RAM_Used_systemunsafe_u;
+    char RAM_all_c[64];
+    char RAM_application_c[64];
+    char RAM_applet_c[64];
+    char RAM_system_c[64];
+    char RAM_systemunsafe_c[64];
+    char RAM_Hz_c[32];
+    //char RAM_compressed_c[320];
+    char RAM_var_compressed_c[320] = "";
 
     void init();
 

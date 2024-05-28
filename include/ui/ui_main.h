@@ -5,6 +5,7 @@
 class GuiMain : public tsl::Gui {
 public:
     GuiMain();
+    ~GuiMain();
 
     // Called when this Gui gets loaded to create the UI
     virtual tsl::elm::Element* createUI() override;
@@ -17,4 +18,6 @@ public:
       HidAnalogStickState joyStickPosLeft,
       HidAnalogStickState joyStickPosRight
     ) override;
+
+    virtual void update() override;
 };

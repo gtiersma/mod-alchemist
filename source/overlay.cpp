@@ -6,8 +6,20 @@
 void ModAlchemist::initServices() {
   pmdmntInitialize();
   pminfoInitialize();
+
+  tsl::hlp::doWithSmSession([this]{
+    if (hosversionAtLeast(8, 0, 0)) {
+      clkrstInitialize();
+    } else {
+      pcvInitialize();
+    }
+  });
+  
+  envIsSyscallHinted(0x6F);
 }
 void ModAlchemist::exitServices() {
+	clkrstExit();
+	pcvExit();
   pminfoExit();
   pmdmntExit();
 }

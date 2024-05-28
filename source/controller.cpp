@@ -15,6 +15,16 @@ void Controller::init() {
   this->tryResult(pminfoGetProgramId(&this->titleId, processId), "pmInfoPID");
 
   this->tryResult(fsOpenSdCardFileSystem(&this->sdSystem), "fsOpenSD");
+
+  this->RAM_Hz = 0;
+  this->RAM_Total_application_u = 0;
+  this->RAM_Total_applet_u = 0;
+  this->RAM_Total_system_u = 0;
+  this->RAM_Total_systemunsafe_u = 0;
+  this->RAM_Used_application_u = 0;
+  this->RAM_Used_applet_u = 0;
+  this->RAM_Used_system_u = 0;
+  this->RAM_Used_systemunsafe_u = 0;
 }
 
 /**
