@@ -2,6 +2,7 @@
 #define GUI_GROUPS_HPP
 
 #include <string>
+#include <map>
 #include <vector>
 
 #include <tesla.hpp>    // The Tesla Header

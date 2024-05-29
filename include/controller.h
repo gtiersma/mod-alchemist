@@ -3,6 +3,7 @@
 #include <switch.h>
 
 #include <vector>
+#include <map>
 #include <string>
 
 class Controller {
@@ -21,12 +22,7 @@ class Controller {
     /*
      * Load all groups from the game folder
      */
-    std::vector<std::string> loadGroups();
-
-    /*
-     * Load all source options within the specified group
-     */
-    std::vector<std::string> loadSources();
+    std::map<std::string, std::vector<std::string>> loadGroups();
 
     /*
      * Load all mod options that could be activated for the moddable source in the group
@@ -98,7 +94,7 @@ class Controller {
     /**
      * Gets the file path for the specified group
      */
-    std::string getGroupPath();
+    std::string getGroupPath(std::string& group);
 
     /**
      * Gets the file path for the specified source within the group

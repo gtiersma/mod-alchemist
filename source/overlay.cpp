@@ -1,7 +1,7 @@
 #include <switch.h>
 
 #include "overlay.h"
-#include "ui/ui_main.h"
+#include "ui/ui_groups.h"
 
 void ModAlchemist::initServices() {
   pmdmntInitialize();
@@ -16,5 +16,5 @@ void ModAlchemist::onHide() {}
 void ModAlchemist::onShow() {}
 
 std::unique_ptr<tsl::Gui> ModAlchemist::loadInitialGui() {
-  return initially<GuiMain>();
+  return initially<GuiGroups>();
 }
